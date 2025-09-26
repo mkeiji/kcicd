@@ -1,0 +1,38 @@
+name: CD Deployment Workflow
+
+on:
+    workflow_call:
+
+jobs:
+    deploy-app:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Fetch secrets from Vault
+              id: vault
+              uses: hashicorp/vault-action@v3
+              with:
+                  url: ${{ secrets.VAULT_ADDR }}
+                  token: ${{ secrets.VAULT_TOKEN }}
+                  secrets: |
+                      github/data/deploy K_USER | K_USER
+                      github/data/deploy K_SERVER | K_SERVER
+                      github/data/deploy PORT | PORT
+                      github/data/deploy SSH_PRIVATE_KEY | SSH_PRIVATE_KEY
+                      github/data/deploy DEPLOY_SCRIPT | DEPLOY_SCRIPT
+
+            - name: Prepare deployment command
+              id: prepare
+              run: |
+                  service="${{ github.event.repository.name }}"
+                  cmd="$(echo "${{ steps.vault.outputs.DEPLOY_SCRIPT }}" | sed "s/servicename/$service/g")"
+                  echo "DEPLOY_CMD=$cmd" >> $GITHUB_ENV
+
+            - name: Deploy
+              uses: appleboy/ssh-action@v1
+              with:
+                  host: ${{ steps.vault.outputs.K_SERVER }}
+                  username: ${{ steps.vault.outputs.K_USER }}
+                  key: ${{ steps.vault.outputs.SSH_PRIVATE_KEY }}
+                  port: ${{ steps.vault.outputs.PORT }}
+                  script: ${{ env.DEPLOY_CMD }}
