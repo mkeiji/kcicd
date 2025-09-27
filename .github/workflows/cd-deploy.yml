@@ -19,13 +19,13 @@ jobs:
                       github/data/deploy K_SERVER | K_SERVER ;
                       github/data/deploy PORT | PORT ;
                       github/data/deploy SSH_PRIVATE_KEY | SSH_PRIVATE_KEY ;
-                      github/data/deploy DEPLOY_SCRIPT | DEPLOY_SCRIPT
+                      github/data/deploy DEPLOYMENT_SCRIPT | DEPLOYMENT_SCRIPT
 
             - name: Prepare deployment command
               id: prepare
               run: |
                   service="${{ github.event.repository.name }}"
-                  cmd="$(echo "${{ steps.vault.outputs.DEPLOY_SCRIPT }}" | sed "s/servicename/$service/g")"
+                  cmd="$(echo "${{ steps.vault.outputs.DEPLOYMENT_SCRIPT }}" | sed "s/servicename/$service/g")"
                   echo "DEPLOY_CMD=$cmd" >> $GITHUB_ENV
 
             - name: Deploy
