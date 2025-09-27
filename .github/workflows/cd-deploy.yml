@@ -15,10 +15,10 @@ jobs:
                   url: ${{ secrets.VAULT_ADDR }}
                   token: ${{ secrets.VAULT_TOKEN }}
                   secrets: |
-                      github/data/deploy K_USER | K_USER
-                      github/data/deploy K_SERVER | K_SERVER
-                      github/data/deploy PORT | PORT
-                      github/data/deploy SSH_PRIVATE_KEY | SSH_PRIVATE_KEY
+                      github/data/deploy K_USER | K_USER ;
+                      github/data/deploy K_SERVER | K_SERVER ;
+                      github/data/deploy PORT | PORT ;
+                      github/data/deploy SSH_PRIVATE_KEY | SSH_PRIVATE_KEY ;
                       github/data/deploy DEPLOY_SCRIPT | DEPLOY_SCRIPT
 
             - name: Prepare deployment command
