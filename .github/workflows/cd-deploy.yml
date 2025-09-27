@@ -26,6 +26,7 @@ jobs:
               run: |
                   service="${{ github.event.repository.name }}"
                   cmd="$(echo "${{ steps.vault.outputs.DEPLOYMENT_SCRIPT }}" | sed "s/servicename/$service/g")"
+                  echo "Deployment command: $cmd"
                   echo "DEPLOY_CMD=$cmd" >> $GITHUB_ENV
 
             - name: Deploy
