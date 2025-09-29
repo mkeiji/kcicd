@@ -2,6 +2,12 @@ name: CD Deployment Workflow
 
 on:
     workflow_call:
+        inputs:
+            command_timeout:
+                description: "Maximum execution time for the remote commands before terminating, e.g., '10m', '1h'."
+                required: false
+                default: "10m"
+                type: string
 
 jobs:
     deploy-app:
@@ -37,3 +43,4 @@ jobs:
                   key: ${{ steps.vault.outputs.SSH_PRIVATE_KEY }}
                   port: ${{ steps.vault.outputs.PORT }}
                   script: ${{ env.DEPLOY_CMD }}
+                  command_timeout: ${{ inputs.command_timeout }}
