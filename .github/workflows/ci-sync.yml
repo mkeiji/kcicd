@@ -1,0 +1,54 @@
+name: Sync Branches
+
+on:
+    workflow_call:
+        inputs:
+            source_branch:
+                description: "Branch to merge from"
+                required: false
+                type: string
+            target_branch:
+                description: "Branch to merge into"
+                required: false
+                type: string
+            conflict_paths:
+                description: "Paths (folders/files) to resolve in favor of target branch (space-separated)"
+                required: false
+                default: ""
+                type: string
+
+jobs:
+    merge:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: Configure Git
+              run: |
+                  git config user.name "github-actions[bot]"
+                  git config user.email "github-actions[bot]@users.noreply.github.com"
+
+            - name: Fetch target branch
+              run: git fetch origin ${{ inputs.target_branch }}:${{ inputs.target_branch }}
+
+            - name: Merge source into target
+              run: |
+                  git checkout ${{ inputs.target_branch }}
+                  git merge origin/${{ inputs.source_branch }} --no-edit || true
+
+                  if [ -n "${{ inputs.conflict_paths }}" ]; then
+                      git checkout --ours ${{ inputs.conflict_paths }} || true
+                      git add ${{ inputs.conflict_paths }} || true
+                  fi
+
+                  if ! git diff --check; then
+                      echo "Merge conflicts remain, aborting."
+                      exit 1
+                  fi
+
+                  git commit --no-edit || echo "Nothing to commit"
+
+            - name: Push changes
+              run: git push origin ${{ inputs.target_branch }}
