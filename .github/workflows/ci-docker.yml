@@ -20,6 +20,11 @@ on:
                 required: false
                 default: "master"
                 type: string
+            build_args:
+                description: "Docker build args, comma-separated e.g. WS_HOST=host,API_KEY=abc"
+                required: false
+                default: ""
+                type: string
 
 jobs:
     build:
@@ -29,9 +34,21 @@ jobs:
 
             - name: Set Envs
               run: |
-                SHOULD_RELEASE=$( [ "${{ github.event_name }}" == "push" ] && [ "${{ github.ref }}" == "refs/heads/${{ inputs.release_branch }}" ] && echo true || echo false )
-                echo "SHOULD_RELEASE=${SHOULD_RELEASE}" >> $GITHUB_ENV
-                echo "VERSION=v$(date +'%Y.%m.%d')" >> $GITHUB_ENV
+                  SHOULD_RELEASE=$( [ "${{ github.event_name }}" == "push" ] && [ "${{ github.ref }}" == "refs/heads/${{ inputs.release_branch }}" ] && echo true || echo false )
+                  echo "SHOULD_RELEASE=${SHOULD_RELEASE}" >> $GITHUB_ENV
+                  echo "VERSION=v$(date +'%Y.%m.%d')" >> $GITHUB_ENV
+
+            - name: Format Build Args
+              id: format-args
+              run: |
+                  if [ -n "${{ inputs.build_args }}" ]; then
+                      FORMATTED_ARGS=$(echo "${{ inputs.build_args }}" | tr ',' '\n')
+                      echo "FORMATTED_ARGS<<EOF" >> $GITHUB_ENV
+                      echo "$FORMATTED_ARGS" >> $GITHUB_ENV
+                      echo "EOF" >> $GITHUB_ENV
+                  else
+                      echo "FORMATTED_ARGS=" >> $GITHUB_ENV
+                  fi
 
             - name: Set up QEMU
               uses: docker/setup-qemu-action@v3
@@ -52,6 +69,7 @@ jobs:
                   context: ${{ inputs.build_context }}
                   file: ${{ inputs.dockerfile }}
                   push: ${{ env.SHOULD_RELEASE }}
+                  build-args: ${{ env.FORMATTED_ARGS }}
                   tags: |
                       ghcr.io/${{ github.repository }}/${{ inputs.image_suffix }}:latest
                       ghcr.io/${{ github.repository }}/${{ inputs.image_suffix }}:${{ env.VERSION }}
