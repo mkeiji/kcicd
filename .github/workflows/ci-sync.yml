@@ -33,10 +33,10 @@ jobs:
             - name: Fetch target branch
               run: git fetch origin ${{ inputs.target_branch }}:${{ inputs.target_branch }}
 
-            - name: Merge source into target
+            - name: Merge source into target with custom message
               run: |
                   git checkout ${{ inputs.target_branch }}
-                  git merge origin/${{ inputs.source_branch }} --no-edit || true
+                  git merge --no-commit --no-ff origin/${{ inputs.source_branch }} || true
 
                   if [ -n "${{ inputs.conflict_paths }}" ]; then
                       git checkout --ours ${{ inputs.conflict_paths }} || true
@@ -48,7 +48,13 @@ jobs:
                       exit 1
                   fi
 
-                  git commit --no-edit || echo "Nothing to commit"
+                  MSGS="$(git log --pretty=format:'%s' ${{ inputs.target_branch }}..origin/${{ inputs.source_branch }})"
+
+                  if [ -n "$MSGS" ]; then
+                      git commit -m "sync: merged commits from ${{ inputs.source_branch }} into ${{ inputs.target_branch }}" -m "$MSGS"
+                  else
+                      echo "Nothing to commit"
+                  fi
 
             - name: Push changes
               run: git push origin ${{ inputs.target_branch }}
